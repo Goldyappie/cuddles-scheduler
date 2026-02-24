@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuddle Planner 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+    --night-bg: #0f0c29;
+    --soft-red: #ff4d4d;
+    --soft-green: #2ecc71;
+    --text-light: #ffffff;
+    --glass-bg: rgba(255, 255, 255, 0.07);
+}
+* { box-sizing: border-box; }
+body, html { 
+    margin: 0; padding: 0; width: 100%; height: 100%; 
+    font-family: 'Inter', sans-serif; background: var(--night-bg); 
+    color: var(--text-light); overflow-x: hidden; 
+}
+
+.main-wrapper { 
+    width: 100vw; min-height: 100vh; display: flex; flex-direction: column; 
+    align-items: center; justify-content: center; position: relative; 
+    background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e); padding: 60px 20px; 
+}
+.star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; pointer-events: none; }
+
+.secret-admin-trigger { position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: transparent; z-index: 3000; }
+
+.content { 
+    z-index: 10; text-align: center; padding: 2.5rem; width: 100%; 
+    max-width: 420px; background: var(--glass-bg); backdrop-filter: blur(20px); 
+    border-radius: 35px; border: 1px solid rgba(255, 255, 255, 0.1); 
+    box-shadow: 0 25px 50px rgba(0,0,0,0.4); 
+}
+h1 { font-size: 2.2rem; margin: 0; background: linear-gradient(to bottom, #fff, #ff85a1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
+.credits { font-size: 0.8rem; color: rgba(255, 255, 255, 0.3); margin-bottom: 25px; font-style: italic; }
+
+.button-stack { display: flex; flex-direction: column; gap: 12px; }
+.btn-row { display: flex; gap: 8px; align-items: center; }
+button.slot-btn { 
+    flex-grow: 1; padding: 16px; border: none; border-radius: 18px; 
+    background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.95rem; 
+    font-weight: 600; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255, 255, 255, 0.05); 
+}
+button.slot-btn.busy { 
+    background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); cursor: not-allowed; 
+}
+
+button.clicked { 
+    background-color: var(--soft-red) !important; 
+    border: 2px solid white !important; 
+    box-shadow: 0 0 20px rgba(255, 77, 77, 0.7); 
+    color: white !important;
+    opacity: 1 !important;
+}
+
+button.slot-btn:disabled:not(.clicked) { opacity: 0.05; cursor: default; }
+
+.admin-actions { display: flex; gap: 5px; }
+.act-btn { width: 44px; height: 44px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+.btn-check { background: #2ecc71; color: white; }
+.btn-x { background: #e74c3c; color: white; }
+
+#message { margin-top: 25px; font-size: 0.95rem; min-height: 25px; font-weight: bold; }
+#admin-badge { display: none; background: #ff4d4d; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; margin-bottom: 15px; font-weight: bold; }
+#back-to-user { display: none; margin-top: 10px; padding: 8px 12px; border-radius: 12px; border: none; background: #ff85a1; color: white; cursor: pointer; font-weight: bold; }
+
+.reset-link { 
+    margin-top: 20px; padding: 14px 24px; border-radius: 25px; 
+    border: none; background: linear-gradient(135deg, #ff4d4d, #ff85a1); 
+    color: white; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.3s;
+    box-shadow: 0 5px 15px rgba(255,77,77,0.5);
+}
+.reset-link:hover { box-shadow: 0 10px 20px rgba(255,77,77,0.7); transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<div class="secret-admin-trigger" onmousedown="startHold()" onmouseup="endHold()" ontouchstart="startHold()" ontouchend="endHold()"></div>
+
+<div class="main-wrapper" id="star-container">
+    <div class="content">
+        <div id="admin-badge">ADMIN MODE</div>
+        <h1>When cuddles?</h1>
+        <div class="credits">Website by Milly</div>
+        <div class="button-stack" id="btn-stack"></div>
+        <div id="message"></div>
+        <button onclick="resetSelection()" class="reset-link">Reset Choice</button>
+        <button id="back-to-user" onclick="exitAdminMode()">Back to User Mode</button>
+    </div>
+</div>
+
+<script>
+const supabaseUrl = 'https://tsgldacamcflsezmlzgb.supabase.co'; 
+const supabaseKey = 'sb_publishable_-qmbAAYM5g3CO335chWO_Q_EMXPC2w2'; 
+const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+let isAdmin = false;
+let holdTimer;
+let busyDays = [];
+
+// Discord webhook
+const webhookURL = "https://discord.com/api/webhooks/1475479375276281968/-vJyQSHF25rO01nnz3lv5wWD6nW_ikfRftXz39KTBIZ54dFi2RZ8CXP3UrvgznLQGwnD";
+let discordMessageId = null;
+
+// Admin & hold
+function startHold() { holdTimer = setTimeout(adminLogin, 5000); }
+function endHold() { clearTimeout(holdTimer); }
+function adminLogin() {
+    if (isAdmin) return;
+    const pass = prompt("Secret Key:");
+    if (pass === "ex18gagd") { 
+        isAdmin = true;
+        document.getElementById('admin-badge').style.display = 'inline-block';
+        document.getElementById('back-to-user').style.display = 'inline-block';
+        render();
+    }
+}
+function exitAdminMode() {
+    isAdmin = false;
+    document.getElementById('admin-badge').style.display = 'none';
+    document.getElementById('back-to-user').style.display = 'none';
+    render();
+}
+
+// Week generator
+function getCurrentWeek() {
+    const today = new Date();
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - today.getDay());
+    const week = [];
+    const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    for(let i=0;i<7;i++){
+        let d = new Date(sunday);
+        d.setDate(sunday.getDate() + i);
+        week.push({id:`d-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, text:`${days[i]}, ${months[d.getMonth()]} ${d.getDate()} (Nighttime)`});
+    }
+    return week;
+}
+
+// Fetch busy days
+async function fetchBusyDays() {
+    const { data, error } = await _supabase.from('busy_days').select('day_id');
+    if(!error && data) busyDays = data.map(d=>d.day_id);
+}
+
+// Send or edit Discord message
+async function sendOrEditDiscordMessage(dayText) {
+    const content = `📅 Cuddle scheduled for: **${dayText}**`;
+    const payload = { content };
+
+    try {
+        if(discordMessageId){
+            await fetch(`${webhookURL}/messages/${discordMessageId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+        } else {
+            const res = await fetch(webhookURL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            const json = await res.json();
+            if(json.id) discordMessageId = json.id;
+        }
+    } catch(e){ console.log("Discord webhook error:", e); }
+}
+
+// Render buttons
+async function render() {
+    await fetchBusyDays();
+    const stack = document.getElementById('btn-stack');
+    stack.innerHTML = '';
+    document.getElementById('message').innerText = '';
+
+    const { data: selectedData } = await _supabase.from('current_selection').select('day_id');
+    const globalSelectedId = selectedData && selectedData.length ? selectedData[0].day_id : null;
+
+    getCurrentWeek().forEach(day => {
+        const row = document.createElement('div');
+        row.className = 'btn-row';
+
+        const btn = document.createElement('button');
+        btn.className = 'slot-btn';
+        btn.innerText = day.text;
+
+        if(busyDays.includes(day.id)) btn.classList.add('busy');
+        if(globalSelectedId === day.id) btn.classList.add('clicked');
+        if(globalSelectedId && globalSelectedId !== day.id) btn.disabled = true;
+
+        // Click logic
+        btn.onclick = async () => {
+            if(isAdmin){
+                // Admin toggle busy
+                if(busyDays.includes(day.id)){
+                    await _supabase.from('busy_days').delete().eq('day_id', day.id);
+                    busyDays = busyDays.filter(d=>d!==day.id);
+                } else {
+                    await _supabase.from('busy_days').insert([{day_id: day.id}]);
+                    busyDays.push(day.id);
+                }
+                render();
+            } else if(!globalSelectedId){
+                userPick(day, btn);
+            }
+        };
+
+        row.appendChild(btn);
+
+        // Admin confirm/cancel
+        if(isAdmin && globalSelectedId === day.id){
+            const actions = document.createElement('div');
+            actions.className = 'admin-actions';
+            actions.innerHTML = `
+                <button class="act-btn btn-check" onclick="adminConfirm('${day.text}', this)">✓</button>
+                <button class="act-btn btn-x" onclick="adminCancel(this)">✕</button>
+            `;
+            row.appendChild(actions);
+        }
+
+        stack.appendChild(row);
+    });
+}
+
+// User pick
+async function userPick(day, btn) {
+    const messageEl = document.getElementById('message');
+    btn.classList.add('clicked');
+    document.querySelectorAll('.slot-btn').forEach(b=>{ if(b!==btn) b.disabled = true; });
+
+    if(busyDays.includes(day.id)){
+        messageEl.innerText = "❌ Sorry, Milly has some other plans that night!";
+        messageEl.style.color = "var(--soft-red)";
+    } else {
+        messageEl.innerText = "✨ Yay! Milly is available that time!";
+        messageEl.style.color = "var(--soft-green)";
+        await _supabase.from('current_selection').delete().neq('day_id','NONE');
+        await _supabase.from('current_selection').insert([{ day_id: day.id }]);
+        await sendOrEditDiscordMessage(day.text);
+    }
+}
+
+// Admin confirm/cancel
+async function adminConfirm(text, el) {
+    await _supabase.from('cuddle_history').insert([{ day_text: text }]);
+    await _supabase.from('current_selection').delete().neq('day_id','NONE');
+    el.parentElement.remove();
+    render();
+
+    // Send cuddle history to Discord
+    try {
+        await fetch(webhookURL, {
+            method:"POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({content:`🎉 Cuddle confirmed: **${text}**`})
+        });
+    } catch(e){ console.log("Discord history error:", e); }
+}
+async function adminCancel(el){
+    await _supabase.from('current_selection').delete().neq('day_id','NONE');
+    el.parentElement.remove();
+    render();
+}
+
+// Reset
+async function resetSelection() {
+    await _supabase.from('current_selection').delete().neq('day_id','NONE');
+    document.querySelectorAll('.slot-btn').forEach(b=>{b.disabled=false; b.classList.remove('clicked');});
+    document.getElementById('message').innerText = '';
+}
+
+// Starry background
+const cont=document.getElementById('star-container');
+for(let i=0;i<45;i++){
+    let s=document.createElement('div');
+    s.className='star';
+    s.style.width=s.style.height='2px';
+    s.style.top=Math.random()*100+'%';
+    s.style.left=Math.random()*100+'%';
+    cont.appendChild(s);
+}
+
+render();
+</script>
+</body>
+</html>
