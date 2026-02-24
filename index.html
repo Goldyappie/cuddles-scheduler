@@ -235,7 +235,7 @@ async function userPick(day, btn) {
     document.querySelectorAll('.slot-btn').forEach(b=>{ if(b!==btn) b.disabled = true; });
 
     if(busyDays.includes(day.id)){
-        messageEl.innerText = "❌ Sorry, Milly has some other plans that night!";
+        messageEl.innerText = "❌ Sorry, Milly will be unavailable that night.";
         messageEl.style.color = "var(--soft-red)";
     } else {
         messageEl.innerText = "✨ Yay! Milly is available that time!";
