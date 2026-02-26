@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cuddle Planner 2026</title>
+<title>Cuddle Scheduler</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
@@ -148,7 +148,6 @@ async function fetchBusyDays() {
     if(!error && data) busyDays = data.map(d=>d.day_id);
 }
 
-// Send or edit Discord message
 async function sendOrEditDiscordMessage(dayText) {
     const content = `📅 Cuddle scheduled for: **${dayText}**`;
     const payload = { content };
@@ -172,7 +171,6 @@ async function sendOrEditDiscordMessage(dayText) {
     } catch(e){ console.log("Discord webhook error:", e); }
 }
 
-// Render buttons
 async function render() {
     await fetchBusyDays();
     const stack = document.getElementById('btn-stack');
@@ -194,10 +192,8 @@ async function render() {
         if(globalSelectedId === day.id) btn.classList.add('clicked');
         if(globalSelectedId && globalSelectedId !== day.id) btn.disabled = true;
 
-        // Click logic
         btn.onclick = async () => {
             if(isAdmin){
-                // Admin toggle busy
                 if(busyDays.includes(day.id)){
                     await _supabase.from('busy_days').delete().eq('day_id', day.id);
                     busyDays = busyDays.filter(d=>d!==day.id);
@@ -213,7 +209,6 @@ async function render() {
 
         row.appendChild(btn);
 
-        // Admin confirm/cancel
         if(isAdmin && globalSelectedId === day.id){
             const actions = document.createElement('div');
             actions.className = 'admin-actions';
