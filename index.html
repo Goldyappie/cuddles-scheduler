@@ -1,95 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cuddle Scheduler</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root {
-    --night-bg: #0f0c29;
-    --soft-red: #ff4d4d;
-    --soft-green: #2ecc71;
-    --text-light: #ffffff;
-    --glass-bg: rgba(255, 255, 255, 0.07);
-}
-* { box-sizing: border-box; }
-body, html { 
-    margin: 0; padding: 0; width: 100%; height: 100%; 
-    font-family: 'Inter', sans-serif; background: var(--night-bg); 
-    color: var(--text-light); overflow-x: hidden; 
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuddle Scheduler</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --soft-blue: #a2d2ff;
+            --deep-blue: #2b2d42;
+            --pastel-pink: #ffafcc;
+            --hot-pink: #ff85a1;
+            --white: #ffffff;
+            --glass: rgba(255, 255, 255, 0.25);
+        }
 
-.main-wrapper { 
-    width: 100vw; min-height: 100vh; display: flex; flex-direction: column; 
-    align-items: center; justify-content: center; position: relative; 
-    background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e); padding: 60px 20px; 
-}
-.star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; pointer-events: none; }
+        * { box-sizing: border-box; }
+        
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            font-family: 'Quicksand', 'Inter', sans-serif; 
+            background: #bde0fe; /* Base cute blue */
+            color: var(--deep-blue); 
+            overflow-x: hidden; 
+        }
 
-.secret-admin-trigger { position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: transparent; z-index: 3000; }
+        /* Magical Background */
+        .main-wrapper { 
+            width: 100vw; min-height: 100vh; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; position: relative; 
+            background: linear-gradient(135deg, #bde0fe 0%, #ffc8dd 100%); 
+            padding: 80px 20px; overflow: hidden;
+        }
 
-.content { 
-    z-index: 10; text-align: center; padding: 2.5rem; width: 100%; 
-    max-width: 420px; background: var(--glass-bg); backdrop-filter: blur(20px); 
-    border-radius: 35px; border: 1px solid rgba(255, 255, 255, 0.1); 
-    box-shadow: 0 25px 50px rgba(0,0,0,0.4); 
-}
-h1 { font-size: 2.2rem; margin: 0; background: linear-gradient(to bottom, #fff, #ff85a1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
-.credits { font-size: 0.8rem; color: rgba(255, 255, 255, 0.3); margin-bottom: 25px; font-style: italic; }
+        /* Floating Shapes */
+        .shape { position: absolute; opacity: 0.6; pointer-events: none; user-select: none; animation: float 6s ease-in-out infinite; }
+        .star-shape::before { content: '⭐'; font-size: 1.2rem; }
+        .moon-shape::before { content: '🌙'; font-size: 1.5rem; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
 
-.button-stack { display: flex; flex-direction: column; gap: 12px; }
-.btn-row { display: flex; gap: 8px; align-items: center; }
-button.slot-btn { 
-    flex-grow: 1; padding: 16px; border: none; border-radius: 18px; 
-    background: rgba(255, 255, 255, 0.1); color: white; font-size: 0.95rem; 
-    font-weight: 600; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255, 255, 255, 0.05); 
-}
-button.slot-btn.busy { 
-    background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); cursor: not-allowed; 
-}
+        /* UI Elements */
+        .history-trigger {
+            position: absolute; top: 20px; left: 20px; z-index: 100;
+            background: var(--white); border: 2px solid var(--soft-blue);
+            color: var(--deep-blue); padding: 10px 18px; border-radius: 25px;
+            cursor: pointer; font-size: 0.85rem; font-weight: 700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.3s;
+        }
+        .history-trigger:hover { transform: scale(1.05); background: var(--soft-blue); color: white; }
 
-button.clicked { 
-    background-color: var(--soft-red) !important; 
-    border: 2px solid white !important; 
-    box-shadow: 0 0 20px rgba(255, 77, 77, 0.7); 
-    color: white !important;
-    opacity: 1 !important;
-}
+        .secret-admin-trigger { position: absolute; top: 0; right: 0; width: 60px; height: 60px; background: transparent; z-index: 3000; }
 
-button.slot-btn:disabled:not(.clicked) { opacity: 0.05; cursor: default; }
+        .content { 
+            z-index: 10; text-align: center; padding: 2.5rem; width: 100%; 
+            max-width: 420px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(15px); 
+            border-radius: 40px; border: 3px solid var(--white); 
+            box-shadow: 0 15px 35px rgba(255, 175, 204, 0.4); 
+        }
 
-.admin-actions { display: flex; gap: 5px; }
-.act-btn { width: 44px; height: 44px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-.btn-check { background: #2ecc71; color: white; }
-.btn-x { background: #e74c3c; color: white; }
+        h1 { font-size: 2.2rem; margin: 0; color: var(--hot-pink); font-weight: 800; text-shadow: 2px 2px 0px white; }
+        .credits { font-size: 0.85rem; color: #888; margin-bottom: 25px; font-weight: 600; }
 
-#message { margin-top: 25px; font-size: 0.95rem; min-height: 25px; font-weight: bold; }
-#admin-badge { display: none; background: #ff4d4d; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; margin-bottom: 15px; font-weight: bold; }
-#back-to-user { display: none; margin-top: 10px; padding: 8px 12px; border-radius: 12px; border: none; background: #ff85a1; color: white; cursor: pointer; font-weight: bold; }
+        /* Buttons & Slots */
+        .button-stack { display: flex; flex-direction: column; gap: 12px; }
+        .btn-row { display: flex; gap: 8px; align-items: center; width: 100%; }
+        
+        button.slot-btn { 
+            flex-grow: 1; padding: 16px; border: 2px solid transparent; border-radius: 20px; 
+            background: var(--white); color: var(--deep-blue); font-size: 0.95rem; 
+            font-weight: 700; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 4px 0px rgba(162, 210, 255, 0.3);
+        }
+        button.slot-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0px rgba(162, 210, 255, 0.4); border-color: var(--soft-blue); }
 
-.reset-link { 
-    margin-top: 20px; padding: 14px 24px; border-radius: 25px; 
-    border: none; background: linear-gradient(135deg, #ff4d4d, #ff85a1); 
-    color: white; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.3s;
-    box-shadow: 0 5px 15px rgba(255,77,77,0.5);
-}
-.reset-link:hover { box-shadow: 0 10px 20px rgba(255,77,77,0.7); transform: translateY(-2px); }
-</style>
+        button.slot-btn.busy { background: #eee; color: #bbb; cursor: not-allowed; box-shadow: none; }
+        
+        button.clicked { 
+            background-color: var(--hot-pink) !important; 
+            color: white !important;
+            border: 2px solid white !important; 
+            box-shadow: 0 0 15px var(--pastel-pink) !important; 
+            transform: scale(1.02);
+        }
+
+        /* Admin Controls */
+        .admin-actions { display: flex; gap: 5px; }
+        .act-btn { width: 44px; height: 44px; border-radius: 15px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: 0.2s; box-shadow: 0 4px 0px rgba(0,0,0,0.1); }
+        .btn-check { background: #2ecc71; color: white; }
+        .btn-x { background: #ff4d4d; color: white; }
+
+        /* Overlay Styles */
+        #history-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(189, 224, 254, 0.9); z-index: 4000; backdrop-filter: blur(10px);
+            padding: 60px 20px; overflow-y: auto;
+        }
+        .history-card {
+            background: white; padding: 18px; border-radius: 20px;
+            border-bottom: 4px solid var(--pastel-pink); margin-bottom: 15px;
+            text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        #message { margin-top: 25px; font-size: 1rem; min-height: 25px; font-weight: 700; color: var(--hot-pink); }
+        #admin-badge { display: none; background: var(--hot-pink); color: white; padding: 6px 15px; border-radius: 20px; font-size: 0.75rem; margin-bottom: 15px; font-weight: 800; letter-spacing: 1px; }
+        
+        .reset-link { 
+            margin-top: 20px; padding: 14px 24px; border-radius: 25px; 
+            border: none; background: var(--soft-blue); 
+            color: white; font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 5px 0px #7fb5e6;
+        }
+        .reset-link:hover { transform: translateY(-2px); box-shadow: 0 7px 0px #7fb5e6; }
+
+        #back-to-user { display: none; margin-top: 15px; background: white; border: 2px solid var(--hot-pink); color: var(--hot-pink); padding: 8px 15px; border-radius: 15px; cursor: pointer; font-weight: 700; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
+<div id="history-overlay">
+    <div style="max-width: 400px; margin: 0 auto; position: relative;">
+        <button onclick="closeHistory()" style="position: absolute; right: 0; top: -40px; background: white; border-radius: 50%; width: 40px; height: 40px; border: none; color: var(--hot-pink); font-size: 1.5rem; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">&times;</button>
+        <h2 style="margin-bottom: 30px; text-align: center; color: var(--deep-blue);">Cuddle Memories 🧸</h2>
+        <div id="history-list"></div>
+    </div>
+</div>
+
 <div class="secret-admin-trigger" onmousedown="startHold()" onmouseup="endHold()" ontouchstart="startHold()" ontouchend="endHold()"></div>
 
-<div class="main-wrapper" id="star-container">
+<div class="main-wrapper" id="shape-container">
+    <button class="history-trigger" onclick="showHistory()">📜 Cuddle History</button>
+
     <div class="content">
-        <div id="admin-badge">ADMIN MODE</div>
+        <div id="admin-badge">ADMIN MODE ✨</div>
         <h1>When cuddles?</h1>
-        <div class="credits">Website by Milly</div>
+        <div class="credits">made with love by Milly</div>
+        
         <div class="button-stack" id="btn-stack"></div>
+
         <div id="message"></div>
-        <button onclick="resetSelection()" class="reset-link">Reset Choice</button>
-        <button id="back-to-user" onclick="exitAdminMode()">Back to User Mode</button>
+        
+        <button onclick="resetSelection()" class="reset-link">Clear Choice</button>
+        <button id="back-to-user" onclick="exitAdminMode()">Exit Admin</button>
     </div>
 </div>
 
@@ -97,17 +153,14 @@ button.slot-btn:disabled:not(.clicked) { opacity: 0.05; cursor: default; }
 const supabaseUrl = 'https://tsgldacamcflsezmlzgb.supabase.co'; 
 const supabaseKey = 'sb_publishable_-qmbAAYM5g3CO335chWO_Q_EMXPC2w2'; 
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const webhookURL = "https://discord.com/api/webhooks/1475479375276281968/-vJyQSHF25rO01nnz3lv5wWD6nW_ikfRftXz39KTBIZ54dFi2RZ8CXP3UrvgznLQGwnD";
 
 let isAdmin = false;
 let holdTimer;
 let busyDays = [];
 
-// Discord webhook
-const webhookURL = "https://discord.com/api/webhooks/1475479375276281968/-vJyQSHF25rO01nnz3lv5wWD6nW_ikfRftXz39KTBIZ54dFi2RZ8CXP3UrvgznLQGwnD";
-let discordMessageId = null;
-
-// Admin & hold
-function startHold() { holdTimer = setTimeout(adminLogin, 5000); }
+// --- Admin ---
+function startHold() { holdTimer = setTimeout(adminLogin, 3000); }
 function endHold() { clearTimeout(holdTimer); }
 function adminLogin() {
     if (isAdmin) return;
@@ -126,90 +179,90 @@ function exitAdminMode() {
     render();
 }
 
-// Week generator
+// --- History ---
+async function showHistory() {
+    const overlay = document.getElementById('history-overlay');
+    const list = document.getElementById('history-list');
+    overlay.style.display = 'block';
+    list.innerHTML = '<p style="text-align:center; opacity:0.5;">Looking for memories...</p>';
+
+    const { data, error } = await _supabase
+        .from('cuddle_history')
+        .select('*')
+        .order('id', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+        list.innerHTML = '<p style="text-align:center; opacity:0.5;">No history found yet!</p>';
+        return;
+    }
+
+    list.innerHTML = data.map(item => `
+        <div class="history-card">
+            <div style="font-weight: 700; color: var(--hot-pink); font-size: 1.1rem;">${item.day_text}</div>
+            <div style="font-size: 0.8rem; color: var(--soft-blue); margin-top: 4px; font-weight: 700;">✨ Scheduled!</div>
+        </div>
+    `).join('');
+}
+
+function closeHistory() { document.getElementById('history-overlay').style.display = 'none'; }
+
+// --- Generator ---
 function getCurrentWeek() {
     const today = new Date();
     const sunday = new Date(today);
     sunday.setDate(today.getDate() - today.getDay());
-    const week = [];
     const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    for(let i=0;i<7;i++){
+    
+    return Array.from({length: 7}, (_, i) => {
         let d = new Date(sunday);
         d.setDate(sunday.getDate() + i);
-        week.push({id:`d-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, text:`${days[i]}, ${months[d.getMonth()]} ${d.getDate()} (Nighttime)`});
-    }
-    return week;
+        return {
+            id: `d-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, 
+            text: `${days[i]}, ${months[d.getMonth()]} ${d.getDate()}`
+        };
+    });
 }
 
-// Fetch busy days
-async function fetchBusyDays() {
-    const { data, error } = await _supabase.from('busy_days').select('day_id');
-    if(!error && data) busyDays = data.map(d=>d.day_id);
-}
-
-async function sendOrEditDiscordMessage(dayText) {
-    const content = `📅 Cuddle scheduled for: **${dayText}**`;
-    const payload = { content };
-
-    try {
-        if(discordMessageId){
-            await fetch(`${webhookURL}/messages/${discordMessageId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-        } else {
-            const res = await fetch(webhookURL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            const json = await res.json();
-            if(json.id) discordMessageId = json.id;
-        }
-    } catch(e){ console.log("Discord webhook error:", e); }
-}
-
+// --- Render ---
 async function render() {
-    await fetchBusyDays();
+    const { data: bData } = await _supabase.from('busy_days').select('day_id');
+    busyDays = bData ? bData.map(d => d.day_id) : [];
+
+    const { data: sData } = await _supabase.from('current_selection').select('day_id');
+    const globalSelectedId = sData && sData.length ? sData[0].day_id : null;
+
     const stack = document.getElementById('btn-stack');
     stack.innerHTML = '';
-    document.getElementById('message').innerText = '';
-
-    const { data: selectedData } = await _supabase.from('current_selection').select('day_id');
-    const globalSelectedId = selectedData && selectedData.length ? selectedData[0].day_id : null;
-
+    
     getCurrentWeek().forEach(day => {
         const row = document.createElement('div');
         row.className = 'btn-row';
 
         const btn = document.createElement('button');
         btn.className = 'slot-btn';
-        btn.innerText = day.text;
+        btn.innerHTML = `${day.text} <span style="font-size:0.7rem; opacity:0.5">Night</span>`;
 
-        if(busyDays.includes(day.id)) btn.classList.add('busy');
-        if(globalSelectedId === day.id) btn.classList.add('clicked');
-        if(globalSelectedId && globalSelectedId !== day.id) btn.disabled = true;
+        if (busyDays.includes(day.id)) btn.classList.add('busy');
+        if (globalSelectedId === day.id) btn.classList.add('clicked');
+        if (globalSelectedId && globalSelectedId !== day.id) btn.disabled = true;
 
         btn.onclick = async () => {
-            if(isAdmin){
-                if(busyDays.includes(day.id)){
+            if (isAdmin) {
+                if (busyDays.includes(day.id)) {
                     await _supabase.from('busy_days').delete().eq('day_id', day.id);
-                    busyDays = busyDays.filter(d=>d!==day.id);
                 } else {
                     await _supabase.from('busy_days').insert([{day_id: day.id}]);
-                    busyDays.push(day.id);
                 }
                 render();
-            } else if(!globalSelectedId){
+            } else if (!globalSelectedId) {
                 userPick(day, btn);
             }
         };
 
         row.appendChild(btn);
 
-        if(isAdmin && globalSelectedId === day.id){
+        if (isAdmin && globalSelectedId === day.id) {
             const actions = document.createElement('div');
             actions.className = 'admin-actions';
             actions.innerHTML = `
@@ -218,67 +271,53 @@ async function render() {
             `;
             row.appendChild(actions);
         }
-
         stack.appendChild(row);
     });
 }
 
-// User pick
 async function userPick(day, btn) {
     const messageEl = document.getElementById('message');
-    btn.classList.add('clicked');
-    document.querySelectorAll('.slot-btn').forEach(b=>{ if(b!==btn) b.disabled = true; });
-
-    if(busyDays.includes(day.id)){
-        messageEl.innerText = "❌ Sorry, Milly will be unavailable that night.";
-        messageEl.style.color = "var(--soft-red)";
+    if (busyDays.includes(day.id)) {
+        messageEl.innerText = "🌸 Sorry, Milly is unavailable that night!";
+        btn.style.animation = "shake 0.4s";
     } else {
-        messageEl.innerText = "✨ Yay! Milly is available that time!";
-        messageEl.style.color = "var(--soft-green)";
+        messageEl.innerText = "🎀 Yay! Milly is available!";
+        btn.classList.add('clicked');
         await _supabase.from('current_selection').delete().neq('day_id','NONE');
         await _supabase.from('current_selection').insert([{ day_id: day.id }]);
-        await sendOrEditDiscordMessage(day.text);
+        fetch(webhookURL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: `🌸 Cuddle scheduled for: **${day.text} (Nighttime)**` }) });
+        render();
     }
 }
 
-// Admin confirm/cancel
-async function adminConfirm(text, el) {
+async function adminConfirm(text) {
     await _supabase.from('cuddle_history').insert([{ day_text: text }]);
     await _supabase.from('current_selection').delete().neq('day_id','NONE');
-    el.parentElement.remove();
+    fetch(webhookURL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: `✅ **Confirmed for:** ${text}!` }) });
     render();
-
-    // Send cuddle history to Discord
-    try {
-        await fetch(webhookURL, {
-            method:"POST",
-            headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({content:`🎉 Cuddle confirmed: **${text}**`})
-        });
-    } catch(e){ console.log("Discord history error:", e); }
 }
-async function adminCancel(el){
+
+async function adminCancel() {
     await _supabase.from('current_selection').delete().neq('day_id','NONE');
-    el.parentElement.remove();
     render();
 }
 
-// Reset
 async function resetSelection() {
     await _supabase.from('current_selection').delete().neq('day_id','NONE');
-    document.querySelectorAll('.slot-btn').forEach(b=>{b.disabled=false; b.classList.remove('clicked');});
     document.getElementById('message').innerText = '';
+    render();
 }
 
-// Starry background
-const cont=document.getElementById('star-container');
-for(let i=0;i<45;i++){
-    let s=document.createElement('div');
-    s.className='star';
-    s.style.width=s.style.height='2px';
-    s.style.top=Math.random()*100+'%';
-    s.style.left=Math.random()*100+'%';
-    cont.appendChild(s);
+// --- Decorations ---
+const shapeCont = document.getElementById('shape-container');
+for(let i=0; i<30; i++) {
+    const s = document.createElement('div');
+    s.className = `shape ${Math.random() > 0.5 ? 'star-shape' : 'moon-shape'}`;
+    s.style.top = Math.random() * 100 + '%';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.animationDelay = Math.random() * 5 + 's';
+    s.style.fontSize = (0.5 + Math.random()) + 'rem';
+    shapeCont.appendChild(s);
 }
 
 render();
