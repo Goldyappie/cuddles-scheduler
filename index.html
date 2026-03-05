@@ -3,143 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuddle Scheduler</title>
+    <title>Cuddle_Protocol_v2.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --midnight-blue: #1a1c2c;
-            --garden-emerald: #2d6a4f;
-            --mint-leaf: #b7e4c7;
-            --sage: #74c69d;
-            --moonlight: #f1f1f1;
-            --glass-dark: rgba(255, 255, 255, 0.1);
+            --bg-dark: #0d0221;
+            --neon-cyan: #00d4ff;
+            --neon-purple: #bc6ff1;
+            --cyber-blue: #5465ff;
+            --text-main: #e2e2e2;
+            --glass: rgba(188, 111, 241, 0.05);
+            --scanline: rgba(0, 0, 0, 0.15);
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; cursor: crosshair; }
         
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            font-family: 'Quicksand', 'Inter', sans-serif; 
-            background: var(--midnight-blue); 
-            color: var(--moonlight); 
-            overflow-x: hidden; 
+            font-family: 'Space Grotesk', sans-serif; 
+            background: var(--bg-dark); 
+            color: var(--text-main); 
+            overflow-x: hidden;
+        }
+
+        /* Scanline Overlay */
+        body::before {
+            content: " ";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(var(--scanline) 50%, transparent 50%);
+            background-size: 100% 4px;
+            pointer-events: none; z-index: 100; opacity: 0.3;
         }
 
         .main-wrapper { 
             width: 100vw; min-height: 100vh; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; position: relative; 
-            background: linear-gradient(135deg, #1a1c2c 0%, #081c15 100%); 
-            padding: 80px 20px; overflow: hidden;
+            background: radial-gradient(circle at center, #240b36 0%, #0d0221 100%); 
+            padding: 40px 20px;
         }
 
-        .shape { position: absolute; opacity: 0.5; pointer-events: none; user-select: none; animation: float 8s ease-in-out infinite; }
-        .sparkle-shape::before { content: '✨'; font-size: 1.2rem; }
-        .flower-shape::before { content: '🌸'; font-size: 1.4rem; }
+        /* Floating Digital Bits */
+        .shape { 
+            position: absolute; opacity: 0.4; pointer-events: none; 
+            color: var(--neon-cyan); font-family: monospace; font-size: 0.8rem;
+            animation: float 10s linear infinite; 
+        }
         
         @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
-            50% { transform: translateY(-30px) rotate(20deg); opacity: 0.6; }
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            20% { opacity: 0.4; }
+            80% { opacity: 0.4; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
         }
 
         .history-trigger {
-            position: absolute; top: 20px; left: 20px; z-index: 100;
-            background: var(--glass-dark); border: 1px solid var(--sage);
-            color: var(--mint-leaf); padding: 10px 18px; border-radius: 25px;
-            cursor: pointer; font-size: 0.85rem; font-weight: 700;
-            backdrop-filter: blur(5px); transition: 0.3s;
+            position: absolute; top: 20px; left: 20px; z-index: 110;
+            background: transparent; border: 1px solid var(--neon-purple);
+            color: var(--neon-purple); padding: 8px 16px; border-radius: 4px;
+            cursor: pointer; font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 2px;
+            transition: 0.3s;
         }
-        .history-trigger:hover { background: var(--garden-emerald); color: white; }
+        .history-trigger:hover { background: var(--neon-purple); color: var(--bg-dark); box-shadow: 0 0 15px var(--neon-purple); }
 
-        .secret-admin-trigger { position: absolute; top: 0; right: 0; width: 60px; height: 60px; background: transparent; z-index: 3000; }
+        .secret-admin-trigger { position: absolute; top: 0; right: 0; width: 50px; height: 50px; background: transparent; z-index: 3000; }
 
         .content { 
             z-index: 10; text-align: center; padding: 2.5rem; width: 100%; 
-            max-width: 420px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(15px); 
-            border-radius: 40px; border: 1px solid rgba(183, 228, 199, 0.2); 
-            box-shadow: 0 20px 45px rgba(0,0,0,0.5); 
+            max-width: 400px; background: rgba(13, 2, 33, 0.8); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid var(--cyber-blue);
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.1);
         }
 
-        h1 { font-size: 2.2rem; margin: 0; color: var(--mint-leaf); font-weight: 800; text-shadow: 0 0 10px rgba(183, 228, 199, 0.3); }
-        .credits { font-size: 0.85rem; color: var(--sage); opacity: 0.7; margin-bottom: 25px; font-weight: 600; }
+        h1 { 
+            font-size: 1.8rem; margin: 0; color: var(--neon-cyan); 
+            font-weight: 700; text-transform: uppercase; letter-spacing: 5px;
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
 
-        /* Buttons & Slots */
-        .button-stack { display: flex; flex-direction: column; gap: 12px; }
-        .btn-row { display: flex; gap: 8px; align-items: center; width: 100%; }
+        .credits { font-size: 0.65rem; color: var(--neon-purple); opacity: 0.8; margin-bottom: 30px; letter-spacing: 3px; text-transform: uppercase; }
+
+        .button-stack { display: flex; flex-direction: column; gap: 10px; }
+        .btn-row { display: flex; gap: 8px; width: 100%; }
         
         button.slot-btn { 
-            flex-grow: 1; padding: 16px; border: 1px solid rgba(183, 228, 199, 0.2); border-radius: 20px; 
-            background: rgba(255, 255, 255, 0.05); color: var(--moonlight); font-size: 0.95rem; 
-            font-weight: 700; cursor: pointer; transition: 0.3s;
+            flex-grow: 1; padding: 14px; border: 1px solid rgba(84, 101, 255, 0.3); 
+            background: rgba(84, 101, 255, 0.05); color: var(--text-main); 
+            font-size: 0.85rem; font-weight: 500; text-transform: uppercase;
+            letter-spacing: 1px; transition: 0.2s;
         }
-        button.slot-btn:hover:not(:disabled) { background: rgba(183, 228, 199, 0.1); border-color: var(--mint-leaf); transform: translateY(-2px); }
-        button.slot-btn.busy { background: rgba(0,0,0,0.3); color: #444; cursor: not-allowed; border-color: transparent; }
+        button.slot-btn:hover:not(:disabled) { 
+            background: rgba(0, 212, 255, 0.1); border-color: var(--neon-cyan); 
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+        button.slot-btn.busy { background: #1a1a1a; color: #444; border-color: transparent; cursor: not-allowed; }
         
         button.clicked { 
-            background-color: var(--garden-emerald) !important; 
-            color: white !important;
-            border: 2px solid var(--mint-leaf) !important; 
-            box-shadow: 0 0 20px rgba(45, 106, 79, 0.6) !important; 
-            transform: scale(1.02);
+            background: var(--neon-purple) !important; color: white !important;
+            border: none !important; box-shadow: 0 0 20px var(--neon-purple) !important; 
         }
 
-        /* Admin Controls */
-        .admin-actions { display: flex; gap: 5px; }
-        .act-btn { width: 44px; height: 44px; border-radius: 15px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: 0.2s; }
-        .btn-check { background: #2ecc71; color: white; }
-        .btn-x { background: #ff4d4d; color: white; }
+        .act-btn { width: 40px; border: none; cursor: pointer; color: white; font-weight: bold; }
+        .btn-check { background: #00ff88; }
+        .btn-x { background: #ff3366; }
 
-        /* Overlay Styles */
         #history-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(8, 28, 21, 0.95); z-index: 4000; backdrop-filter: blur(15px);
-            padding: 60px 20px; overflow-y: auto;
+            background: rgba(13, 2, 33, 0.98); z-index: 4000; padding: 60px 20px; overflow-y: auto;
         }
         .history-card {
-            background: rgba(255, 255, 255, 0.05); padding: 18px; border-radius: 20px;
-            border-left: 4px solid var(--mint-leaf); margin-bottom: 15px;
-            text-align: left;
+            background: rgba(188, 111, 241, 0.05); padding: 15px; border-radius: 2px;
+            border-left: 2px solid var(--neon-cyan); margin-bottom: 10px; text-align: left;
         }
 
-        #message { margin-top: 25px; font-size: 1rem; min-height: 25px; font-weight: 700; color: var(--mint-leaf); }
-        #admin-badge { display: none; background: var(--garden-emerald); color: white; padding: 6px 15px; border-radius: 20px; font-size: 0.75rem; margin-bottom: 15px; font-weight: 800; }
+        #message { margin-top: 20px; font-size: 0.8rem; color: var(--neon-cyan); min-height: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        #admin-badge { display: none; color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 4px 10px; font-size: 0.6rem; margin-bottom: 10px; box-shadow: 0 0 10px var(--neon-cyan); }
         
         .reset-link { 
-            margin-top: 20px; padding: 14px 24px; border-radius: 25px; 
-            border: 1px solid var(--sage); background: transparent; 
-            color: var(--mint-leaf); font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.3s;
+            margin-top: 20px; background: transparent; border: 1px solid #444; 
+            color: #888; padding: 10px; width: 100%; font-size: 0.7rem; 
+            text-transform: uppercase; letter-spacing: 2px; transition: 0.3s;
         }
-        .reset-link:hover { background: var(--garden-emerald); color: white; }
-
-        #back-to-user { display: none; margin-top: 15px; background: transparent; border: 1px solid var(--moonlight); color: var(--moonlight); padding: 8px 15px; border-radius: 15px; cursor: pointer; font-weight: 700; }
+        .reset-link:hover { border-color: var(--text-main); color: var(--text-main); }
+        
+        #back-to-user { display: none; margin-top: 10px; background: transparent; border: 1px solid red; color: red; padding: 5px; width: 100%; font-size: 0.6rem; }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <div id="history-overlay">
     <div style="max-width: 400px; margin: 0 auto; position: relative;">
-        <button onclick="closeHistory()" style="position: absolute; right: 0; top: -40px; background: none; border: none; color: var(--mint-leaf); font-size: 2.5rem; cursor: pointer;">&times;</button>
-        <h2 style="margin-bottom: 30px; text-align: center; color: var(--mint-leaf);">Cuddle History 🧸</h2>
+        <button onclick="closeHistory()" style="position: absolute; right: 0; top: -40px; background: none; border: none; color: var(--neon-cyan); font-size: 2rem; cursor: pointer;">&times;</button>
+        <h2 style="letter-spacing: 5px; color: var(--neon-cyan); text-align: center;">LOG_HISTORY</h2>
         <div id="history-list"></div>
     </div>
 </div>
 
-<div class="secret-admin-trigger" onmousedown="startHold()" onmouseup="endHold()" ontouchstart="startHold()" ontouchend="endHold()"></div>
+<div class="secret-admin-trigger" onmousedown="startHold()" onmouseup="endHold()"></div>
 
-<div class="main-wrapper" id="shape-container">
-    <button class="history-trigger" onclick="showHistory()">📜 Cuddle History</button>
+<div class="main-wrapper" id="particle-container">
+    <button class="history-trigger" onclick="showHistory()">[ MEMORY_LOG ]</button>
 
     <div class="content">
-        <div id="admin-badge">ADMIN MODE ✨</div>
-        <h1>When cuddles?</h1>
-        <div class="credits">Website by Milly</div>
+        <div id="admin-badge">ROOT_ACCESS_GRANTED</div>
+        <h1>SCHEDULE_v2</h1>
+        <div class="credits">User: Milly // Protocol: Cuddle</div>
         
         <div class="button-stack" id="btn-stack"></div>
 
         <div id="message"></div>
         
-        <button onclick="resetSelection()" class="reset-link">Clear Choice</button>
-        <button id="back-to-user" onclick="exitAdminMode()">Exit Admin</button>
+        <button onclick="resetSelection()" class="reset-link">Clear Selection</button>
+        <button id="back-to-user" onclick="exitAdminMode()">Exit Root</button>
     </div>
 </div>
 
@@ -157,11 +174,11 @@ function startHold() { holdTimer = setTimeout(adminLogin, 3000); }
 function endHold() { clearTimeout(holdTimer); }
 function adminLogin() {
     if (isAdmin) return;
-    const pass = prompt("Secret Key:");
+    const pass = prompt("Enter Access Key:");
     if (pass === "ex18gagd") { 
         isAdmin = true;
         document.getElementById('admin-badge').style.display = 'inline-block';
-        document.getElementById('back-to-user').style.display = 'inline-block';
+        document.getElementById('back-to-user').style.display = 'block';
         render();
     }
 }
@@ -176,21 +193,19 @@ async function showHistory() {
     const overlay = document.getElementById('history-overlay');
     const list = document.getElementById('history-list');
     overlay.style.display = 'block';
-    list.innerHTML = '<p style="text-align:center; opacity:0.5;">Looking for memories...</p>';
+    list.innerHTML = '<p style="text-align:center; opacity:0.5; font-size:0.7rem;">ACCESSING DATABASE...</p>';
 
-    const { data, error } = await _supabase
-        .from('cuddle_history')
-        .select('day_text');
+    const { data, error } = await _supabase.from('cuddle_history').select('day_text');
 
     if (error || !data || data.length === 0) {
-        list.innerHTML = '<p style="text-align:center; opacity:0.5;">No history found yet!</p>';
+        list.innerHTML = '<p style="text-align:center; opacity:0.5; font-size:0.7rem;">NO LOGS FOUND.</p>';
         return;
     }
 
     list.innerHTML = data.map(item => `
         <div class="history-card">
-            <div style="font-weight: 700; color: var(--mint-leaf); font-size: 1.1rem;">${item.day_text}</div>
-            <div style="font-size: 0.8rem; color: var(--sage); margin-top: 4px; font-weight: 700;">✨ Scheduled!</div>
+            <div style="font-weight: 700; color: var(--neon-cyan); font-size: 0.9rem;">${item.day_text}</div>
+            <div style="font-size: 0.6rem; color: var(--neon-purple); margin-top: 4px;">PROTOCOL_SUCCESSFUL</div>
         </div>
     `).join('');
 }
@@ -201,15 +216,14 @@ function getCurrentWeek() {
     const today = new Date();
     const sunday = new Date(today);
     sunday.setDate(today.getDate() - today.getDay());
-    const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const days = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
     
     return Array.from({length: 7}, (_, i) => {
         let d = new Date(sunday);
         d.setDate(sunday.getDate() + i);
         return {
             id: `d-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, 
-            text: `${days[i]}, ${months[d.getMonth()]} ${d.getDate()}`
+            text: `${days[i]} / ${d.getDate()}.${d.getMonth()+1}`
         };
     });
 }
@@ -230,7 +244,7 @@ async function render() {
 
         const btn = document.createElement('button');
         btn.className = 'slot-btn';
-        btn.innerHTML = `${day.text} <span style="font-size:0.7rem; opacity:0.3">Night</span>`;
+        btn.innerHTML = `<span>${day.text}</span> <small style="font-size:0.6rem; opacity:0.5; margin-left:10px;">[NIGHT]</small>`;
 
         if (busyDays.includes(day.id)) btn.classList.add('busy');
         if (globalSelectedId === day.id) btn.classList.add('clicked');
@@ -253,10 +267,10 @@ async function render() {
 
         if (isAdmin && globalSelectedId === day.id) {
             const actions = document.createElement('div');
-            actions.className = 'admin-actions';
+            actions.style.display = 'flex';
             actions.innerHTML = `
-                <button class="act-btn btn-check" onclick="adminConfirm('${day.text}', this)">✓</button>
-                <button class="act-btn btn-x" onclick="adminCancel(this)">✕</button>
+                <button class="act-btn btn-check" onclick="adminConfirm('${day.text}')">OK</button>
+                <button class="act-btn btn-x" onclick="adminCancel()">NO</button>
             `;
             row.appendChild(actions);
         }
@@ -267,13 +281,13 @@ async function render() {
 async function userPick(day, btn) {
     const messageEl = document.getElementById('message');
     if (busyDays.includes(day.id)) {
-        messageEl.innerText = "🌸 Sorry, Milly is unavailable that night!";
+        messageEl.innerText = "> ERROR: MILLY_UNAVAILABLE";
     } else {
-        messageEl.innerText = "🎀 Yay! Milly is available!";
+        messageEl.innerText = "> UPLINK_SUCCESSFUL: DATE_SELECTED";
         btn.classList.add('clicked');
         await _supabase.from('current_selection').delete().neq('day_id','NONE');
         await _supabase.from('current_selection').insert([{ day_id: day.id }]);
-        fetch(webhookURL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: `🌸 Cuddle scheduled for: **${day.text} (Nighttime)**` }) });
+        fetch(webhookURL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: `👾 **SYSTEM UPLINK:** Cuddle confirmed for **${day.text}**` }) });
         render();
     }
 }
@@ -281,7 +295,7 @@ async function userPick(day, btn) {
 async function adminConfirm(text) {
     await _supabase.from('cuddle_history').insert([{ day_text: text }]);
     await _supabase.from('current_selection').delete().neq('day_id','NONE');
-    fetch(webhookURL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: `✅ **Confirmed for:** ${text}!` }) });
+    fetch(webhookURL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: `✅ **DATABASE UPDATED:** ${text} confirmed.` }) });
     render();
 }
 
@@ -292,19 +306,21 @@ async function adminCancel() {
 
 async function resetSelection() {
     await _supabase.from('current_selection').delete().neq('day_id','NONE');
-    document.getElementById('message').innerText = '';
+    document.getElementById('message').innerText = '> SYSTEM_RESET';
     render();
 }
 
-const shapeCont = document.getElementById('shape-container');
-for(let i=0; i<25; i++) {
+// Particle Generator
+const partCont = document.getElementById('particle-container');
+const particles = ['0', '1', '{ }', '< >', '++', '--', '##'];
+for(let i=0; i<30; i++) {
     const s = document.createElement('div');
-    s.className = `shape ${Math.random() > 0.5 ? 'sparkle-shape' : 'flower-shape'}`;
+    s.className = 'shape';
+    s.innerText = particles[Math.floor(Math.random() * particles.length)];
     s.style.top = Math.random() * 100 + '%';
     s.style.left = Math.random() * 100 + '%';
-    s.style.animationDelay = Math.random() * 5 + 's';
-    s.style.fontSize = (0.6 + Math.random()) + 'rem';
-    shapeCont.appendChild(s);
+    s.style.animationDelay = Math.random() * 8 + 's';
+    partCont.appendChild(s);
 }
 
 render();
