@@ -7,13 +7,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --midnight-blue: #0b0e14; /* Deep Space */
-            --garden-emerald: #6a5acd; /* Slate Blue/Purple */
-            --mint-leaf: #b0c4de;    /* Light Steel Blue */
-            --sage: #9370db;         /* Medium Purple */
-            --moonlight: #ffffff;
-            --glass-dark: rgba(255, 255, 255, 0.05);
-            --nebula-glow: rgba(147, 112, 219, 0.3);
+            --soft-blue: #a2d2ff;
+            --deep-blue: #2b2d42;
+            --pastel-pink: #ffafcc;
+            --hot-pink: #ff85a1;
+            --white: #ffffff;
+            --glass: rgba(255, 255, 255, 0.25);
         }
 
         * { box-sizing: border-box; }
@@ -21,108 +20,96 @@
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             font-family: 'Quicksand', 'Inter', sans-serif; 
-            background: var(--midnight-blue); 
-            color: var(--moonlight); 
+            background: #bde0fe; 
+            color: var(--deep-blue); 
             overflow-x: hidden; 
         }
 
         .main-wrapper { 
             width: 100vw; min-height: 100vh; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; position: relative; 
-            /* Cosmic Gradient */
-            background: radial-gradient(circle at 20% 30%, #161a25 0%, #0b0e14 100%),
-                        radial-gradient(circle at 80% 70%, #1a1425 0%, transparent 50%); 
+            background: linear-gradient(135deg, #bde0fe 0%, #ffc8dd 100%); 
             padding: 80px 20px; overflow: hidden;
         }
 
-        /* Twinkling Stars & Nebula Shapes */
-        .shape { 
-            position: absolute; opacity: 0.5; pointer-events: none; user-select: none; 
-            animation: twinkle 4s ease-in-out infinite alternate; 
-        }
-        .sparkle-shape::before { content: '⭐'; font-size: 0.8rem; filter: blur(1px); }
-        .flower-shape::before { content: '✨'; font-size: 1rem; opacity: 0.8; }
+        .shape { position: absolute; opacity: 0.6; pointer-events: none; user-select: none; animation: float 6s ease-in-out infinite; }
+        .star-shape::before { content: '⭐'; font-size: 1.2rem; }
+        .moon-shape::before { content: '🌙'; font-size: 1.5rem; }
         
-        @keyframes twinkle {
-            0% { transform: scale(1); opacity: 0.3; filter: brightness(1); }
-            100% { transform: scale(1.2); opacity: 0.8; filter: brightness(1.5) drop-shadow(0 0 5px white); }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
         }
 
         .history-trigger {
             position: absolute; top: 20px; left: 20px; z-index: 100;
-            background: var(--glass-dark); border: 1px solid rgba(176, 196, 222, 0.3);
-            color: var(--mint-leaf); padding: 10px 18px; border-radius: 25px;
+            background: var(--white); border: 2px solid var(--soft-blue);
+            color: var(--deep-blue); padding: 10px 18px; border-radius: 25px;
             cursor: pointer; font-size: 0.85rem; font-weight: 700;
-            backdrop-filter: blur(5px); transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.3s;
         }
-        .history-trigger:hover { background: var(--garden-emerald); color: white; box-shadow: 0 0 15px var(--nebula-glow); }
+        .history-trigger:hover { transform: scale(1.05); background: var(--soft-blue); color: white; }
 
         .secret-admin-trigger { position: absolute; top: 0; right: 0; width: 60px; height: 60px; background: transparent; z-index: 3000; }
 
         .content { 
             z-index: 10; text-align: center; padding: 2.5rem; width: 100%; 
-            max-width: 420px; background: rgba(15, 15, 25, 0.7); 
-            backdrop-filter: blur(15px); 
-            border-radius: 40px; border: 1px solid rgba(176, 196, 222, 0.15); 
-            box-shadow: 0 20px 45px rgba(0,0,0,0.6), 0 0 30px var(--nebula-glow); 
+            max-width: 420px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(15px); 
+            border-radius: 40px; border: 3px solid var(--white); 
+            box-shadow: 0 15px 35px rgba(255, 175, 204, 0.4); 
         }
 
-        h1 { font-size: 2.2rem; margin: 0; color: var(--mint-leaf); font-weight: 800; text-shadow: 0 0 15px rgba(176, 196, 222, 0.5); }
-        .credits { font-size: 0.85rem; color: var(--sage); opacity: 0.8; margin-bottom: 25px; font-weight: 600; letter-spacing: 1px; }
+        h1 { font-size: 2.2rem; margin: 0; color: var(--hot-pink); font-weight: 800; text-shadow: 2px 2px 0px white; }
+        .credits { font-size: 0.85rem; color: #888; margin-bottom: 25px; font-weight: 600; }
 
         .button-stack { display: flex; flex-direction: column; gap: 12px; }
         .btn-row { display: flex; gap: 8px; align-items: center; width: 100%; }
         
         button.slot-btn { 
-            flex-grow: 1; padding: 16px; border: 1px solid rgba(176, 196, 222, 0.1); 
-            border-radius: 20px; 
-            background: rgba(255, 255, 255, 0.03); color: var(--moonlight); font-size: 0.95rem; 
+            flex-grow: 1; padding: 16px; border: 2px solid transparent; border-radius: 20px; 
+            background: var(--white); color: var(--deep-blue); font-size: 0.95rem; 
             font-weight: 700; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 4px 0px rgba(162, 210, 255, 0.3);
         }
-        button.slot-btn:hover:not(:disabled) { 
-            background: rgba(147, 112, 219, 0.15); 
-            border-color: var(--mint-leaf); 
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        button.slot-btn.busy { background: rgba(0,0,0,0.4); color: #444; cursor: not-allowed; border-color: transparent; }
+        button.slot-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0px rgba(162, 210, 255, 0.4); border-color: var(--soft-blue); }
+        button.slot-btn.busy { background: #eee; color: #bbb; cursor: not-allowed; box-shadow: none; }
         
         button.clicked { 
-            background: linear-gradient(135deg, var(--garden-emerald), var(--sage)) !important; 
+            background-color: var(--hot-pink) !important; 
             color: white !important;
-            border: 1px solid var(--moonlight) !important; 
-            box-shadow: 0 0 25px var(--sage) !important; 
+            border: 2px solid white !important; 
+            box-shadow: 0 0 15px var(--pastel-pink) !important; 
             transform: scale(1.02);
         }
 
         .admin-actions { display: flex; gap: 5px; }
-        .act-btn { width: 44px; height: 44px; border-radius: 15px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: 0.2s; }
-        .btn-check { background: #483d8b; color: white; }
-        .btn-x { background: #8b0000; color: white; }
+        .act-btn { width: 44px; height: 44px; border-radius: 15px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: 0.2s; box-shadow: 0 4px 0px rgba(0,0,0,0.1); }
+        .btn-check { background: #2ecc71; color: white; }
+        .btn-x { background: #ff4d4d; color: white; }
 
         #history-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 10, 0.97); z-index: 4000; backdrop-filter: blur(15px);
+            background: rgba(189, 224, 254, 0.9); z-index: 4000; backdrop-filter: blur(10px);
             padding: 60px 20px; overflow-y: auto;
         }
         .history-card {
-            background: rgba(255, 255, 255, 0.03); padding: 18px; border-radius: 20px;
-            border-left: 4px solid var(--sage); margin-bottom: 15px;
-            text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            background: white; padding: 18px; border-radius: 20px;
+            border-bottom: 4px solid var(--pastel-pink); margin-bottom: 15px;
+            text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
 
-        #message { margin-top: 25px; font-size: 1rem; min-height: 25px; font-weight: 700; color: var(--mint-leaf); text-shadow: 0 0 8px var(--nebula-glow); }
-        #admin-badge { display: none; background: var(--garden-emerald); color: white; padding: 6px 15px; border-radius: 20px; font-size: 0.75rem; margin-bottom: 15px; font-weight: 800; box-shadow: 0 0 10px var(--sage); }
+        #message { margin-top: 25px; font-size: 1rem; min-height: 25px; font-weight: 700; color: var(--hot-pink); }
+        #admin-badge { display: none; background: var(--hot-pink); color: white; padding: 6px 15px; border-radius: 20px; font-size: 0.75rem; margin-bottom: 15px; font-weight: 800; letter-spacing: 1px; }
         
         .reset-link { 
             margin-top: 20px; padding: 14px 24px; border-radius: 25px; 
-            border: 1px solid var(--sage); background: transparent; 
-            color: var(--mint-leaf); font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.3s;
+            border: none; background: var(--soft-blue); 
+            color: white; font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 5px 0px #7fb5e6;
         }
-        .reset-link:hover { background: var(--garden-emerald); color: white; border-color: transparent; }
+        .reset-link:hover { transform: translateY(-2px); box-shadow: 0 7px 0px #7fb5e6; }
 
-        #back-to-user { display: none; margin-top: 15px; background: transparent; border: 1px solid var(--moonlight); color: var(--moonlight); padding: 8px 15px; border-radius: 15px; cursor: pointer; font-weight: 700; opacity: 0.7; }
-        #back-to-user:hover { opacity: 1; background: rgba(255,255,255,0.1); }
+        #back-to-user { display: none; margin-top: 15px; background: white; border: 2px solid var(--hot-pink); color: var(--hot-pink); padding: 8px 15px; border-radius: 15px; cursor: pointer; font-weight: 700; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
 </head>
@@ -130,8 +117,8 @@
 
 <div id="history-overlay">
     <div style="max-width: 400px; margin: 0 auto; position: relative;">
-        <button onclick="closeHistory()" style="position: absolute; right: 0; top: -40px; background: none; border: none; color: var(--mint-leaf); font-size: 2.5rem; cursor: pointer;">&times;</button>
-        <h2 style="margin-bottom: 30px; text-align: center; color: var(--mint-leaf);">Cuddle History 🧸</h2>
+        <button onclick="closeHistory()" style="position: absolute; right: 0; top: -40px; background: white; border-radius: 50%; width: 40px; height: 40px; border: none; color: var(--hot-pink); font-size: 1.5rem; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">&times;</button>
+        <h2 style="margin-bottom: 30px; text-align: center; color: var(--deep-blue);">Cuddle History 🧸</h2>
         <div id="history-list"></div>
     </div>
 </div>
@@ -156,7 +143,6 @@
 </div>
 
 <script>
-/* LOGIC REMAINS COMPLETELY UNCHANGED */
 const supabaseUrl = 'https://tsgldacamcflsezmlzgb.supabase.co'; 
 const supabaseKey = 'sb_publishable_-qmbAAYM5g3CO335chWO_Q_EMXPC2w2'; 
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -191,7 +177,10 @@ async function showHistory() {
     overlay.style.display = 'block';
     list.innerHTML = '<p style="text-align:center; opacity:0.5;">Looking for memories...</p>';
 
-    const { data, error } = await _supabase.from('cuddle_history').select('day_text');
+    // Fix: Using correct column name from your database image
+    const { data, error } = await _supabase
+        .from('cuddle_history')
+        .select('day_text');
 
     if (error || !data || data.length === 0) {
         list.innerHTML = '<p style="text-align:center; opacity:0.5;">No history found yet!</p>';
@@ -200,8 +189,8 @@ async function showHistory() {
 
     list.innerHTML = data.map(item => `
         <div class="history-card">
-            <div style="font-weight: 700; color: var(--mint-leaf); font-size: 1.1rem;">${item.day_text}</div>
-            <div style="font-size: 0.8rem; color: var(--sage); margin-top: 4px; font-weight: 700;">✨ Scheduled!</div>
+            <div style="font-weight: 700; color: var(--hot-pink); font-size: 1.1rem;">${item.day_text}</div>
+            <div style="font-size: 0.8rem; color: var(--soft-blue); margin-top: 4px; font-weight: 700;">✨ Scheduled!</div>
         </div>
     `).join('');
 }
@@ -241,7 +230,7 @@ async function render() {
 
         const btn = document.createElement('button');
         btn.className = 'slot-btn';
-        btn.innerHTML = `${day.text} <span style="font-size:0.7rem; opacity:0.3">Night</span>`;
+        btn.innerHTML = `${day.text} <span style="font-size:0.7rem; opacity:0.5">Night</span>`;
 
         if (busyDays.includes(day.id)) btn.classList.add('busy');
         if (globalSelectedId === day.id) btn.classList.add('clicked');
@@ -279,6 +268,7 @@ async function userPick(day, btn) {
     const messageEl = document.getElementById('message');
     if (busyDays.includes(day.id)) {
         messageEl.innerText = "🌸 Sorry, Milly is unavailable that night!";
+        btn.style.animation = "shake 0.4s";
     } else {
         messageEl.innerText = "🎀 Yay! Milly is available!";
         btn.classList.add('clicked');
@@ -290,6 +280,7 @@ async function userPick(day, btn) {
 }
 
 async function adminConfirm(text) {
+    // Fix: Ensures insert uses the exact column name 'day_text'
     await _supabase.from('cuddle_history').insert([{ day_text: text }]);
     await _supabase.from('current_selection').delete().neq('day_id','NONE');
     fetch(webhookURL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: `✅ **Confirmed for:** ${text}!` }) });
@@ -308,13 +299,13 @@ async function resetSelection() {
 }
 
 const shapeCont = document.getElementById('shape-container');
-for(let i=0; i<40; i++) {
+for(let i=0; i<30; i++) {
     const s = document.createElement('div');
-    s.className = `shape ${Math.random() > 0.5 ? 'sparkle-shape' : 'flower-shape'}`;
+    s.className = `shape ${Math.random() > 0.5 ? 'star-shape' : 'moon-shape'}`;
     s.style.top = Math.random() * 100 + '%';
     s.style.left = Math.random() * 100 + '%';
     s.style.animationDelay = Math.random() * 5 + 's';
-    s.style.fontSize = (0.5 + Math.random() * 0.5) + 'rem';
+    s.style.fontSize = (0.5 + Math.random()) + 'rem';
     shapeCont.appendChild(s);
 }
 
