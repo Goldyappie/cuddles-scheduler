@@ -154,6 +154,7 @@ let busyDays = [];
 
 function startHold() { holdTimer = setTimeout(adminLogin, 3000); }
 function endHold() { clearTimeout(holdTimer); }
+
 function adminLogin() {
     if (isAdmin) return;
     const pass = prompt("Secret Key:");
@@ -164,6 +165,7 @@ function adminLogin() {
         render();
     }
 }
+
 function exitAdminMode() {
     isAdmin = false;
     document.getElementById('admin-badge').style.display = 'none';
@@ -177,9 +179,7 @@ async function showHistory() {
     overlay.style.display = 'block';
     list.innerHTML = '<p style="text-align:center; opacity:0.5;">Looking for memories...</p>';
 
-    const { data, error } = await _supabase
-        .from('cuddle_history')
-        .select('day_text');
+    const { data, error } = await _supabase.from('cuddle_history').select('*').order('created_at', { ascending: false });
 
     if (error || !data || data.length === 0) {
         list.innerHTML = '<p style="text-align:center; opacity:0.5;">No history found yet!</p>';
@@ -240,7 +240,7 @@ async function render() {
                 if (busyDays.includes(day.id)) {
                     await _supabase.from('busy_days').delete().eq('day_id', day.id);
                 } else {
-                    await _supabase.from('busy_days').insert([{day_id: day.id}]);
+                    await _supabase.from('busy_days').upsert([{day_id: day.id}]);
                 }
                 render();
             } else if (!globalSelectedId) {
@@ -295,6 +295,7 @@ async function resetSelection() {
     render();
 }
 
+// Background shapes
 const shapeCont = document.getElementById('shape-container');
 for(let i=0; i<30; i++) {
     const s = document.createElement('div');
@@ -310,3 +311,4 @@ render();
 </script>
 </body>
 </html>
+
