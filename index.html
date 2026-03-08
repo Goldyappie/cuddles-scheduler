@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cuddle Scheduler</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
     <style>
         :root {
             --soft-blue: #a2d2ff;
@@ -177,7 +177,6 @@ async function showHistory() {
     overlay.style.display = 'block';
     list.innerHTML = '<p style="text-align:center; opacity:0.5;">Looking for memories...</p>';
 
-    // Fix: Using correct column name from your database image
     const { data, error } = await _supabase
         .from('cuddle_history')
         .select('day_text');
@@ -208,7 +207,7 @@ function getCurrentWeek() {
         let d = new Date(sunday);
         d.setDate(sunday.getDate() + i);
         return {
-            id: `d-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, 
+            id: `d-${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`, 
             text: `${days[i]}, ${months[d.getMonth()]} ${d.getDate()}`
         };
     });
@@ -255,8 +254,8 @@ async function render() {
             const actions = document.createElement('div');
             actions.className = 'admin-actions';
             actions.innerHTML = `
-                <button class="act-btn btn-check" onclick="adminConfirm('${day.text}', this)">✓</button>
-                <button class="act-btn btn-x" onclick="adminCancel(this)">✕</button>
+                <button class="act-btn btn-check" onclick="adminConfirm('${day.text}')">✓</button>
+                <button class="act-btn btn-x" onclick="adminCancel()">✕</button>
             `;
             row.appendChild(actions);
         }
@@ -268,7 +267,6 @@ async function userPick(day, btn) {
     const messageEl = document.getElementById('message');
     if (busyDays.includes(day.id)) {
         messageEl.innerText = "🌸 Sorry, Milly is unavailable that night!";
-        btn.style.animation = "shake 0.4s";
     } else {
         messageEl.innerText = "🎀 Yay! Milly is available!";
         btn.classList.add('clicked');
@@ -280,7 +278,6 @@ async function userPick(day, btn) {
 }
 
 async function adminConfirm(text) {
-    // Fix: Ensures insert uses the exact column name 'day_text'
     await _supabase.from('cuddle_history').insert([{ day_text: text }]);
     await _supabase.from('current_selection').delete().neq('day_id','NONE');
     fetch(webhookURL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: `✅ **Confirmed for:** ${text}!` }) });
